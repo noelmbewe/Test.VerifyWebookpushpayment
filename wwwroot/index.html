@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OneKhusa Payment Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f1117; color: #e1e4e8; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #1a1f36, #2d1b69); padding: 24px 32px; border-bottom: 1px solid #2d333b; }
+        .header h1 { font-size: 22px; font-weight: 600; color: #fff; }
+        .header p { color: #8b949e; font-size: 13px; margin-top: 4px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px; display: grid; gap: 20px; }
+        .card { background: #161b22; border: 1px solid #2d333b; border-radius: 10px; padding: 20px; }
+        .card h2 { font-size: 15px; font-weight: 600; margin-bottom: 14px; color: #c9d1d9; display: flex; align-items: center; gap: 8px; }
+        .card h2 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .dot.green { background: #3fb950; }
+        .dot.blue { background: #58a6ff; }
+        .dot.orange { background: #d29922; }
+        .dot.purple { background: #bc8cff; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input { width: 100%; padding: 8px 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #e1e4e8; font-size: 13px; font-family: 'Cascadia Code', 'Fira Code', monospace; }
+        .form-group input:focus { outline: none; border-color: #58a6ff; }
+        button { padding: 8px 16px; border: none; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: #238636; color: #fff; }
+        .btn-primary:hover:not(:disabled) { background: #2ea043; }
+        .btn-secondary { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; }
+        .btn-secondary:hover:not(:disabled) { background: #30363d; }
+        .btn-group { display: flex; gap: 8px; margin-top: 8px; }
+        .result-box { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 14px; margin-top: 12px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto; line-height: 1.6; }
+        .result-box.success { border-color: #238636; color: #3fb950; }
+        .result-box.error { border-color: #da3633; color: #f85149; }
+        .result-box.info { border-color: #1f6feb; color: #58a6ff; }
+        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+        .status-badge.success { background: #238636; color: #fff; }
+        .status-badge.pending { background: #9e6a03; color: #fff; }
+        .status-badge.error { background: #da3633; color: #fff; }
+        .status-badge.info { background: #1f6feb; color: #fff; }
+        .status-badge.verified { background: #238636; color: #fff; }
+        .status-badge.rejected { background: #da3633; color: #fff; }
+        .status-badge.skipped { background: #6e7681; color: #fff; }
+        .verify-banner { padding: 10px 14px; border-radius: 6px; margin-bottom: 8px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .verify-banner.verified { background: #0d2818; border: 1px solid #238636; color: #3fb950; }
+        .verify-banner.rejected { background: #2d0f0f; border: 1px solid #da3633; color: #f85149; }
+        .verify-banner.skipped { background: #1c1c1c; border: 1px solid #6e7681; color: #8b949e; }
+        .verify-icon { font-size: 16px; }
+        .verify-detail { font-weight: 400; color: #8b949e; margin-left: 4px; }
+        .sig-row { display: flex; gap: 6px; align-items: flex-start; margin-top: 6px; font-size: 11px; font-family: monospace; }
+        .sig-label { color: #8b949e; white-space: nowrap; min-width: 90px; }
+        .sig-value { color: #c9d1d9; word-break: break-all; }
+        .webhook-list { max-height: 400px; overflow-y: auto; }
+        .webhook-item { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 12px; margin-bottom: 8px; font-size: 12px; }
+        .webhook-item .meta { color: #8b949e; margin-bottom: 6px; display: flex; gap: 12px; flex-wrap: wrap; }
+        .webhook-item pre { margin: 0; color: #c9d1d9; white-space: pre-wrap; word-break: break-all; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 11px; }
+        .copy-btn { padding: 2px 8px; font-size: 11px; background: #21262d; border: 1px solid #30363d; color: #8b949e; border-radius: 4px; cursor: pointer; }
+        .copy-btn:hover { background: #30363d; color: #e1e4e8; }
+        .row { display: flex; gap: 8px; align-items: center; }
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #30363d; border-top-color: #58a6ff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .tan-display { background: linear-gradient(135deg, #1a2332, #1b2d1b); border: 2px solid #238636; border-radius: 8px; padding: 16px; margin-top: 12px; text-align: center; }
+        .tan-display .label { font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; }
+        .tan-display .value { font-size: 28px; font-weight: 700; color: #3fb950; font-family: 'Cascadia Code', monospace; margin: 6px 0; letter-spacing: 2px; }
+        .tan-display .expiry { font-size: 11px; color: #d29922; }
+        .hidden { display: none; }
+        .steps { margin: 12px 0; display: flex; flex-direction: column; gap: 6px; }
+        .step { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #8b949e; }
+        .step.active { color: #58a6ff; }
+        .step.done { color: #3fb950; }
+        .step.failed { color: #f85149; }
+        .step-icon { width: 18px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>OneKhusa Payment Test</h1>
+        <p>Sandbox - Request to Pay (RTP) with Timed Account Numbers</p>
+    </div>
+
+    <div class="container">
+        <div class="grid-2">
+            <!-- Request to Pay -->
+            <div class="card">
+                <h2><span class="dot blue"></span> Request to Pay</h2>
+                <div class="form-group">
+                    <label>Transaction Amount</label>
+                    <input type="number" id="amount" value="100.00" step="0.01" />
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="description" value="Test payment" />
+                </div>
+                <div class="form-group">
+                    <label>Captured By</label>
+                    <input type="text" id="capturedBy" value="test@example.com" />
+                </div>
+                <div class="form-group">
+                    <label>Reference Number (auto-generated if empty)</label>
+                    <input type="text" id="referenceNumber" value="" placeholder="Leave empty to auto-generate" />
+                </div>
+                <button class="btn-primary" onclick="initiatePayment()" id="btn-rtp">Initiate Payment</button>
+
+                <div class="steps hidden" id="steps">
+                    <div class="step" id="step1"><span class="step-icon">○</span> Getting access token...</div>
+                    <div class="step" id="step2"><span class="step-icon">○</span> Initiating payment request...</div>
+                </div>
+
+                <div class="tan-display hidden" id="tan-display">
+                    <div class="label">Timed Account Number (TAN)</div>
+                    <div class="value" id="tan-value"></div>
+                    <div class="expiry" id="tan-expiry"></div>
+                </div>
+                <div class="result-box hidden" id="rtp-result"></div>
+            </div>
+
+            <!-- Push Payment -->
+            <div class="card">
+                <h2><span class="dot green"></span> Push Payment</h2>
+                <div class="form-group">
+                    <label>Connector ID</label>
+                    <input type="number" id="push-connector-id" value="550044" />
+                </div>
+                <div class="form-group">
+                    <label>Payer Account Number</label>
+                    <input type="text" id="push-payer-account" value="0999000000" />
+                </div>
+                <div class="form-group">
+                    <label>Transaction Amount</label>
+                    <input type="number" id="push-amount" value="100.00" step="0.01" />
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="push-description" value="Test push payment" />
+                </div>
+                <div class="form-group">
+                    <label>Captured By</label>
+                    <input type="text" id="push-captured-by" value="test@example.com" />
+                </div>
+                <div class="form-group">
+                    <label>Source Reference (auto-generated if empty)</label>
+                    <input type="text" id="push-source-reference" value="" placeholder="Leave empty to auto-generate" />
+                </div>
+                <button class="btn-primary" onclick="initiatePushPayment()" id="btn-push">Initiate Push Payment</button>
+                <div class="result-box hidden" id="push-result"></div>
+            </div>
+
+            <!-- Webhook Events -->
+            <div class="card">
+                <h2><span class="dot orange"></span> Webhook Events</h2>
+                <div class="btn-group" style="margin-bottom: 12px;">
+                    <button class="btn-secondary" onclick="loadWebhooks()">Refresh</button>
+                    <button class="btn-secondary" onclick="clearWebhooks()">Clear</button>
+                    <button class="btn-primary" onclick="testWebhook()" id="btn-test-webhook" style="font-size: 11px; padding: 6px 12px;">Send Test Webhook</button>
+                </div>
+                <div class="webhook-list" id="webhook-list">
+                    <div style="color: #8b949e; font-size: 13px; text-align: center; padding: 20px;">No webhook events yet</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Config Info -->
+        <div class="card">
+            <h2><span class="dot purple"></span> Configuration</h2>
+            <div style="font-size: 12px; color: #8b949e; display: grid; gap: 6px;">
+                <div><strong style="color:#c9d1d9;">API Base:</strong> https://api.onekhusa.com/sandbox/v1</div>
+                <div><strong style="color:#c9d1d9;">Webhook Callback URL:</strong>
+                    <span id="webhook-url" style="color:#58a6ff; font-family: monospace;"></span>
+                    <button class="copy-btn" onclick="copyWebhookUrl()">Copy</button>
+                </div>
+                <div><strong style="color:#c9d1d9;">Note:</strong> Configure your callback URL in the OneKhusa dashboard to point to your devtunnel URL</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const apiBase = window.location.origin;
+        document.getElementById('webhook-url').textContent = apiBase + '/webhook/pushpayment';
+
+        function show(el, text, type) {
+            const e = document.getElementById(el);
+            e.textContent = text;
+            e.className = 'result-box ' + type;
+            e.classList.remove('hidden');
+        }
+
+        function hide(el) {
+            document.getElementById(el).classList.add('hidden');
+        }
+
+        function setStep(id, state, text) {
+            const el = document.getElementById(id);
+            el.className = 'step ' + state;
+            if (state === 'done') el.innerHTML = '<span class="step-icon">✓</span> ' + text;
+            else if (state === 'failed') el.innerHTML = '<span class="step-icon">✗</span> ' + text;
+            else if (state === 'active') el.innerHTML = '<span class="spinner"></span> ' + text;
+            else el.innerHTML = '<span class="step-icon">○</span> ' + text;
+        }
+
+        async function initiatePayment() {
+            const btn = document.getElementById('btn-rtp');
+            btn.disabled = true;
+            hide('rtp-result');
+            hide('tan-display');
+            document.getElementById('steps').classList.remove('hidden');
+
+            setStep('step1', 'active', 'Getting access token...');
+            setStep('step2', 'active', 'Waiting...');
+
+            const body = {
+                transactionAmount: parseFloat(document.getElementById('amount').value),
+                transactionDescription: document.getElementById('description').value,
+                capturedBy: document.getElementById('capturedBy').value,
+                referenceNumber: document.getElementById('referenceNumber').value
+            };
+
+            try {
+                const res = await fetch(apiBase + '/api/request-to-pay/custom', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                setStep('step1', 'done', 'Access token obtained');
+
+                let data;
+                const text = await res.text();
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    setStep('step2', 'failed', 'Invalid response from server');
+                    show('rtp-result', 'Raw response:\n' + text, 'error');
+                    btn.disabled = false;
+                    return;
+                }
+
+                if (res.ok && data.success !== false) {
+                    setStep('step2', 'done', 'Payment initiated');
+                    const d = data.data || data;
+                    show('rtp-result', JSON.stringify(d, null, 2), 'success');
+                    document.getElementById('tan-value').textContent = d.timedAccountNumber;
+                    document.getElementById('tan-expiry').textContent = 'Expires: ' + new Date(d.expiryDate).toLocaleString() + ' (' + d.expiryInMinutes + ' min)';
+                    document.getElementById('tan-display').classList.remove('hidden');
+                } else {
+                    setStep('step2', 'failed', 'Payment failed');
+                    const errorMsg = data.error || JSON.stringify(data, null, 2);
+                    show('rtp-result', errorMsg, 'error');
+                }
+            } catch (e) {
+                setStep('step1', 'failed', 'Network error');
+                setStep('step2', 'failed', 'Could not reach server');
+                show('rtp-result', 'Error: ' + e.message + '\n\nMake sure the server is running and accessible.', 'error');
+            }
+            btn.disabled = false;
+        }
+
+        async function initiatePushPayment() {
+            const btn = document.getElementById('btn-push');
+            btn.disabled = true;
+            hide('push-result');
+
+            const body = {
+                connectorId: parseInt(document.getElementById('push-connector-id').value, 10),
+                payerAccountNumber: document.getElementById('push-payer-account').value,
+                sourceReferenceNumber: document.getElementById('push-source-reference').value,
+                transactionAmount: parseFloat(document.getElementById('push-amount').value),
+                transactionDescription: document.getElementById('push-description').value,
+                capturedBy: document.getElementById('push-captured-by').value
+            };
+
+            try {
+                const res = await fetch(apiBase + '/api/push-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (res.ok && data.success !== false) {
+                    show('push-result', JSON.stringify(data.data ?? data, null, 2), 'success');
+                } else {
+                    show('push-result', data.error || JSON.stringify(data, null, 2), 'error');
+                }
+            } catch (e) {
+                show('push-result', 'Error: ' + e.message + '\n\nMake sure the server is running and accessible.', 'error');
+            }
+            btn.disabled = false;
+        }
+
+        async function loadWebhooks() {
+            try {
+                const res = await fetch(apiBase + '/api/webhook-events');
+                const text = await res.text();
+                if (!text) { clearWebhooks(); return; }
+                const data = JSON.parse(text);
+                const list = document.getElementById('webhook-list');
+
+                if (!data.length) {
+                    list.innerHTML = '<div style="color: #8b949e; font-size: 13px; text-align: center; padding: 20px;">No webhook events yet</div>';
+                    return;
+                }
+
+                list.innerHTML = data.map(w => {
+                    const parsed = w.parsedPayload;
+                    const rawPayload = w.payload;
+                    const amt = parsed ? parsed.transactionAmount : 'N/A';
+                    const tan = parsed?.metaData?.timedAccountNumber
+                        || parsed?.metaDataRawJson ? JSON.parse(parsed.metaDataRawJson).timedAccountNumber : 'N/A';
+                    const evtStatus = ['payrequest.success', 'pushpayment.success'].includes(w.event) ? 'success' : 'pending';
+
+                    let verifyBanner = '';
+                    if (w.verified) {
+                        verifyBanner = `<div class="verify-banner verified"><span class="verify-icon">✓</span> Webhook Verified<span class="verify-detail">— ${w.verificationReason}</span></div>`;
+                    } else if (w.signatureProvided) {
+                        verifyBanner = `<div class="verify-banner rejected"><span class="verify-icon">✗</span> Verification Failed<span class="verify-detail">— ${w.verificationReason}</span></div>`;
+                    } else {
+                        verifyBanner = `<div class="verify-banner skipped"><span class="verify-icon">—</span> Verification Skipped<span class="verify-detail">— ${w.verificationReason}</span></div>`;
+                    }
+
+                    const sigDetails = w.signatureProvided ? `
+                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #21262d;">
+                            <div class="sig-row"><span class="sig-label">Received:</span><span class="sig-value">${w.signatureProvided}</span></div>
+                            <div class="sig-row"><span class="sig-label">Computed:</span><span class="sig-value">${w.computedSignature}</span></div>
+                            <div class="sig-row"><span class="sig-label">Match:</span><span class="sig-value" style="color: ${w.signatureMatch ? '#3fb950' : '#f85149'}">${w.signatureMatch ? 'YES' : 'NO'}</span></div>
+                        </div>` : '';
+
+                    const headersDetails = w.headers ? `
+                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #21262d;">
+                            <div style="font-size: 11px; color: #8b949e; margin-bottom: 4px;">HEADERS:</div>
+                            ${Object.entries(w.headers).map(([k, v]) => `<div class="sig-row"><span class="sig-label">${k}:</span><span class="sig-value">${v}</span></div>`).join('')}
+                        </div>` : '';
+
+                    let displayJson;
+                    try {
+                        displayJson = JSON.stringify(JSON.parse(rawPayload), null, 2);
+                    } catch {
+                        displayJson = rawPayload;
+                    }
+
+                    return `<div class="webhook-item">
+                        ${verifyBanner}
+                        <div class="meta">
+                            <span class="status-badge ${evtStatus}">${w.event}</span>
+                            <span>${new Date(w.receivedAt).toLocaleString()}</span>
+                            <span>TAN: ${tan}</span>
+                            <span>Amount: ${amt}</span>
+                        </div>
+                        <pre>${displayJson}</pre>
+                        ${headersDetails}
+                        ${sigDetails}
+                    </div>`;
+                }).join('');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function clearWebhooks() {
+            document.getElementById('webhook-list').innerHTML = '<div style="color: #8b949e; font-size: 13px; text-align: center; padding: 20px;">No webhook events yet</div>';
+        }
+
+        function copyWebhookUrl() {
+            navigator.clipboard.writeText(document.getElementById('webhook-url').textContent);
+        }
+
+        async function testWebhook() {
+            const btn = document.getElementById('btn-test-webhook');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            try {
+                const res = await fetch(apiBase + '/api/test-webhook', { method: 'POST' });
+                const data = await res.json();
+                loadWebhooks();
+                btn.textContent = 'Sent!';
+                setTimeout(() => { btn.textContent = 'Send Test Webhook'; }, 2000);
+            } catch (e) {
+                btn.textContent = 'Error';
+                setTimeout(() => { btn.textContent = 'Send Test Webhook'; }, 2000);
+            }
+            btn.disabled = false;
+        }
+
+        setInterval(loadWebhooks, 5000);
+    </script>
+</body>
+</html>
